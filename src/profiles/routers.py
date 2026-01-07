@@ -4,14 +4,15 @@ from typing import Optional
 from fastapi import APIRouter, UploadFile
 from fastapi.params import Depends, File, Form
 
+from src.conf.logger import get_logger
 from src.auth_user.dependencies import get_current_verified_user
-
 from src.common.decorators import file_exceptions
 from src.common.utils import upload_img
-
 from src.profiles.decorators import profile_exceptions
 from src.profiles.services import ProfileService
 from src.profiles.dependencies import get_profile_service
+
+logger = get_logger(__name__)
 
 router = APIRouter(tags=["profiles"])
 
@@ -38,6 +39,7 @@ async def create_profiles(
         "avatar_url": avatar_path,
     }
     result = await service.create_profile(user_id=current_user, profile_data=profile_data)
+    logger.info("Profile created", extra={"user_id": current_user})
     return {'status': 'success', 'data': result}
 
 
@@ -66,7 +68,9 @@ async def update_profiles(
     if avatar:
         avatar_path = await upload_img(img=avatar, user_id=current_user)
         update_data["avatar_url"] = avatar_path
+
     await services.update_profile(user_id=current_user, update_data=update_data)
+    logger.info("Profile updated", extra={"user_id": current_user, "fields": list(update_data.keys())})
     return {"status": "success", "msg": "Профиль успешно обновлён", "data": update_data}
 
 
@@ -77,4 +81,5 @@ async def get_profiles(
         services: ProfileService = Depends(get_profile_service),
 ):
     result = await services.get_profile(user_id=current_user)
+    logger.info("Profile fetched", extra={"user_id": current_user})
     return {"status": "success", "data": result}

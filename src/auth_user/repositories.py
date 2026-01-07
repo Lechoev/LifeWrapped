@@ -3,7 +3,10 @@ from datetime import datetime, UTC
 from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.conf.logger import get_logger
 from src.auth_user.models import AuthModel, VerificationCodeModel, RefreshTokenModel
+
+logger = get_logger(__name__)
 
 
 class AuthRepository:
@@ -11,18 +14,21 @@ class AuthRepository:
         self.session = session
 
     async def get_user_by_email(self, email: str) -> AuthModel | None:
+        logger.debug("DB get user by email", extra={"email": email})
         result = await self.session.execute(
             select(AuthModel).where(AuthModel.email == email)
         )
         return result.scalar_one_or_none()
 
     async def create_user(self, email: str) -> AuthModel:
+        logger.debug("DB create user", extra={"email": email})
         user = AuthModel(email=email, is_verified=False)
         self.session.add(user)
         await self.session.flush()
         return user
 
     async def delete_verification_codes(self, email: str):
+        logger.debug("DB delete verification codes", extra={"email": email})
         await self.session.execute(
             delete(VerificationCodeModel).where(
                 VerificationCodeModel.email == email
@@ -30,12 +36,14 @@ class AuthRepository:
         )
 
     async def create_verification_code(self, email: str) -> VerificationCodeModel:
+        logger.debug("DB create verification code", extra={"email": email})
         code_obj = VerificationCodeModel.generate_code(email=email)
         self.session.add(code_obj)
         await self.session.flush()
         return code_obj
 
     async def find_verification_code(self, email: str, code: str) -> VerificationCodeModel | None:
+        logger.debug("DB find verification code", extra={"email": email})
         result = await self.session.execute(
             select(VerificationCodeModel)
             .where(
@@ -47,6 +55,7 @@ class AuthRepository:
         return result.scalar_one_or_none()
 
     async def save_refresh_token(self, user_id: int, token_hash: str, expires_at: datetime) -> RefreshTokenModel:
+        logger.debug("DB save refresh token", extra={"user_id": user_id})
         token = RefreshTokenModel(
             user_id=user_id,
             token_hash=token_hash,
@@ -57,6 +66,7 @@ class AuthRepository:
         return token
 
     async def find_valid_refresh_token(self, user_id: int, plain_token: str) -> RefreshTokenModel | None:
+        logger.debug("DB find valid refresh token by user", extra={"user_id": user_id})
         result = await self.session.execute(
             select(RefreshTokenModel).where(
                 RefreshTokenModel.user_id == user_id,
@@ -73,6 +83,7 @@ class AuthRepository:
         return None
 
     async def revoke_all_user_tokens(self, user_id: int):
+        logger.debug("DB revoke all user refresh tokens", extra={"user_id": user_id})
         await self.session.execute(
             update(RefreshTokenModel)
             .where(RefreshTokenModel.user_id == user_id)
@@ -80,14 +91,18 @@ class AuthRepository:
         )
 
     async def cleanup_expired_tokens(self) -> int:
+        logger.info("DB cleanup expired refresh tokens")
         result = await self.session.execute(
             delete(RefreshTokenModel)
             .where(RefreshTokenModel.expires_at < datetime.now(UTC))
             .returning(RefreshTokenModel.id)
         )
-        return len(result.scalars().all())
+        count = len(result.scalars().all())
+        logger.info("DB expired refresh tokens cleaned", extra={"count": count})
+        return count
 
     async def find_valid_refresh_token_by_token(self, plain_token: str) -> RefreshTokenModel | None:
+        logger.debug("DB find valid refresh token by plain token")
         result = await self.session.execute(
             select(RefreshTokenModel).where(
                 RefreshTokenModel.expires_at > datetime.now(UTC),

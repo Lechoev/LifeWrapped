@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends
 
+from src.conf.logger import get_logger
 from src.auth_user.dependencies import get_current_verified_user
 from src.goals.dependencies import get_goal_service
 from src.goals.decorators import goal_exceptions
 from src.goals.schemas import CreateGoalSchema, UpdateGoalSchema
 from src.goals.services import GoalService
+
+logger = get_logger(__name__)
 
 router = APIRouter(tags=["goals"])
 
@@ -19,6 +22,8 @@ async def create_goals(
     data = goal_data.model_dump()
     data['user_id'] = current_user
     result = await service.create_goal(data)
+
+    logger.info("Goal created", extra={"user_id": current_user, "goal": data})
     return {"status": "success", "data": result}
 
 
@@ -29,6 +34,8 @@ async def get_all_goals(
         current_user: int = Depends(get_current_verified_user),
 ):
     result = await service.get_all_goals(user_id=current_user)
+
+    logger.info("Fetched all goals", extra={"user_id": current_user, "count": len(result)})
     return {"status": "success", "data": result}
 
 
@@ -40,6 +47,8 @@ async def get_goal(
         current_user: int = Depends(get_current_verified_user),
 ):
     result = await service.get_goal(goal_id=goal_id, user_id=current_user)
+
+    logger.info("Fetched goal", extra={"user_id": current_user, "goal_id": goal_id})
     return {"status": "success", "data": result}
 
 
@@ -58,4 +67,5 @@ async def update_goal(
         goal_data=update_dict
     )
 
+    logger.info("Goal updated", extra={"user_id": current_user, "goal_id": goal_id})
     return {"status": "success", "data": result}

@@ -6,6 +6,8 @@ services:
     container_name: life_wrapped_web
     command: /app/scripts/start.sh
     restart: always
+    volumes:
+      - ./logs:/app/logs
     env_file:
       - .env.docker
     depends_on:
@@ -27,7 +29,7 @@ services:
     env_file:
       - .env.db.user
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5

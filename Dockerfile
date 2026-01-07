@@ -12,7 +12,8 @@ RUN pip install --upgrade pip \
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    LOG_FILE=/app/logs/app.log
 
 RUN useradd -m appuser
 
@@ -21,6 +22,8 @@ COPY --from=builder /install /usr/local
 WORKDIR /app
 COPY . .
 
-RUN chown -R appuser:appuser /app && chmod +x scripts/start.sh
+RUN mkdir -p /app/logs \
+    && chown -R appuser:appuser /app/logs \
+    && chmod +x scripts/start.sh
 
 USER appuser

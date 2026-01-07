@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
+from src.conf import settings
+from src.conf.logger import get_logger
 from src.auth_user.schemas import AuthSchema, VerificationCodeSchema
 from src.auth_user.services import AuthService
 from src.auth_user.dependencies import get_auth_service, get_current_verified_user
 from src.auth_user.decorators import auth_exceptions
-from src.conf import settings
+
+logger = get_logger(__name__)
 
 
 router = APIRouter(tags=["auth_user"])
@@ -17,6 +20,7 @@ async def request_verification_code(
     auth: AuthSchema,
     service: AuthService = Depends(get_auth_service),
 ) -> dict:
+    logger.info("Request verification code", extra={"email": auth.email})
     result = await service.request_verification_code(auth.email)
     return result
 
@@ -27,6 +31,8 @@ async def authenticate(
     data: VerificationCodeSchema,
     service: AuthService = Depends(get_auth_service),
 ) -> JSONResponse:
+    logger.info("Authenticate attempt", extra={"email": data.email})
+
     access_token, refresh_token, user = await service.authenticate_with_code(
         email=data.email,
         code=data.code
@@ -61,6 +67,8 @@ async def refresh(
     request: Request,
     service: AuthService = Depends(get_auth_service),
 ) -> JSONResponse:
+    logger.info("Refresh token attempt")
+
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise HTTPException(
@@ -99,6 +107,8 @@ async def logout(
     service: AuthService = Depends(get_auth_service),
     current_user: int = Depends(get_current_verified_user),
 ) -> JSONResponse:
+    logger.info("Logout", extra={"user_id": current_user})
+
     refresh_token = request.cookies.get("refresh_token")
     await service.logout(current_user, refresh_token)
 
@@ -117,6 +127,8 @@ async def logout_all(
     service: AuthService = Depends(get_auth_service),
     current_user: int = Depends(get_current_verified_user),
 ) -> JSONResponse:
+    logger.info("Logout all sessions", extra={"user_id": current_user})
+
     await service.logout_all(current_user)
 
     response = JSONResponse(
@@ -143,5 +155,7 @@ async def get_current_user_info(
 async def cleanup_tokens(
     service: AuthService = Depends(get_auth_service),
 ) -> dict:
+    logger.info("Cleanup expired tokens started")
+
     cleaned = await service.cleanup_expired_tokens()
     return {"msg": f"Очищено {cleaned} просроченных токенов"}

@@ -14,4 +14,7 @@ exec gunicorn -k uvicorn.workers.UvicornWorker \
      -b 0.0.0.0:8000 \
      --access-logfile - \
      --error-logfile - \
-     src.main:app
+     src.main:app \
+     --worker-tmp-dir /dev/shm \
+     --log-level warning \
+     --access-logfile /dev/null

@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.goals.models import GoalModel
 from src.goals.exceptions import IdNotFoundError
+from src.conf.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class GoalRepository:
@@ -11,17 +14,17 @@ class GoalRepository:
         self.session = session
 
     async def create_goal(self, data: dict):
-        """Создать цель"""
         try:
             goal = GoalModel(**data)
             self.session.add(goal)
             await self.session.flush()
+            logger.info("Goal created", extra={"user_id": data.get("user_id"), "goal_id": goal.id})
             return goal
         except IntegrityError:
+            logger.warning("Invalid foreign key", extra={"data": data})
             raise IdNotFoundError("Передан неверный внешний ключ")
 
     async def get_by_id(self, goal_id: int, user_id: int):
-        """Получить цель по ID с проверкой владельца"""
         result = await self.session.execute(
             select(GoalModel).where(
                 GoalModel.id == goal_id,
@@ -37,7 +40,9 @@ class GoalRepository:
             .where(GoalModel.user_id == user_id)
             .order_by(GoalModel.created_at.desc())
         )
-        return result.scalars().all()
+        goals = result.scalars().all()
+        logger.info("Fetched all goals for user", extra={"user_id": user_id, "count": len(goals)})
+        return goals
 
     async def check_parent_exists(self, parent_id: int, user_id: int) -> bool:
         """Проверить существование родительской цели"""
@@ -47,7 +52,9 @@ class GoalRepository:
                 GoalModel.user_id == user_id
             ))
         )
-        return result.scalar()
+        exists_flag = result.scalar()
+        logger.info("Checked parent goal existence", extra={"user_id": user_id, "parent_id": parent_id, "exists": exists_flag})
+        return exists_flag
 
     async def update_goal(self, goal_id: int, user_id: int, update_data: dict):
         stmt = (
@@ -64,6 +71,8 @@ class GoalRepository:
         updated_goal = result.scalar_one_or_none()
 
         if not updated_goal:
+            logger.warning("Goal not found for update", extra={"user_id": user_id, "goal_id": goal_id})
             raise IdNotFoundError(f"Цель {goal_id} не найдена или не принадлежит вам")
 
+        logger.info("Goal updated", extra={"user_id": user_id, "goal_id": goal_id, "update_fields": list(update_data.keys())})
         return updated_goal

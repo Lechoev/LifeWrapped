@@ -7,11 +7,11 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    DB_USER: str = os.getenv('DB_USER', 'postgres')
-    DB_NAME: str = os.getenv('DB_NAME', 'db_name')
-    DB_PASSWORD: str = os.getenv('DB_PASSWORD', 'password')
-    DB_HOST: str = os.getenv('DB_HOST', 'localhost')
-    DB_PORT: str = os.getenv('DB_PORT', '5432')
+    DB_USER: str = os.getenv('DB_USER')
+    DB_NAME: str = os.getenv('DB_NAME')
+    DB_PASSWORD: str = os.getenv('DB_PASSWORD')
+    DB_HOST: str = os.getenv('DB_HOST')
+    DB_PORT: str = os.getenv('DB_PORT')
 
     database_url: str = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 

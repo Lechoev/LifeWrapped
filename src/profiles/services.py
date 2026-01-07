@@ -1,4 +1,7 @@
 from src.profiles import exceptions
+from src.conf.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ProfileService:
@@ -11,18 +14,11 @@ class ProfileService:
             if existing_profile:
                 raise exceptions.ProfileAlreadyExistsError(f"Профиль для пользователя {user_id} уже существует")
 
-            profile = await uow.profiles.create_profile(
+            await uow.profiles.create_profile(
                 data={**profile_data, "user_id": user_id}
             )
-            return {
-                "user_id": profile.user_id,
-                "first_name": profile.first_name,
-                "last_name": profile.last_name,
-                "bio": profile.bio,
-                "birth_date": profile.birth_date.isoformat() if profile.birth_date else None,
-                "avatar_url": profile.avatar_url,
-                "created_at": profile.created_at.isoformat() if profile.created_at else None
-            }
+            logger.info("Profile created", extra={"user_id": user_id})
+            return profile_data
 
     async def check_profile(self, user_id: int):
         async with self.uow_factory() as uow:
@@ -38,6 +34,7 @@ class ProfileService:
             if not profile:
                 raise exceptions.ProfileNotFoundError(f"Профиль для пользователя {user_id} не найден")
 
+            logger.info("Profile updated", extra={"user_id": user_id, "fields": list(update_data.keys())})
             return {
                 "user_id": profile.user_id,
                 "first_name": profile.first_name,
@@ -53,4 +50,5 @@ class ProfileService:
             profile = await uow.profiles.get_profile(user_id=user_id)
             if not profile:
                 raise exceptions.ProfileNotFoundError(f"Профиль для пользователя {user_id} не найден")
+            logger.info("Profile fetched", extra={"user_id": user_id})
             return profile
