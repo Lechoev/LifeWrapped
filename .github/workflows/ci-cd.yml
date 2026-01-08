@@ -82,11 +82,12 @@ jobs:
 
     steps:
       - name: SSH на сервер и обновление
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_IP }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
           script: |
             cd /home/deploy/LifeWrapped
             git pull origin master
