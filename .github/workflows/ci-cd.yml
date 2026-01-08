@@ -89,8 +89,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            cd /home/deploy/LifeWrapped
+            cd /home/deploy/LifeWrapped/LifeWrapped
             git pull origin master
-            docker compose down
-            docker compose up -d --build
+            docker-compose down
+            docker-compose up -d --build
             echo "Новая версия запущена!"
