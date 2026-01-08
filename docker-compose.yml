@@ -9,7 +9,7 @@ services:
     volumes:
       - ./logs:/app/logs
     env_file:
-      - .env.render
+      - .env.docker
     depends_on:
       db:
         condition: service_healthy
@@ -27,7 +27,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - .env.render
+      - .env.db.user
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 5s
@@ -52,7 +52,7 @@ services:
       --max-tasks-per-child=1000 
       --prefetch-multiplier=1
     env_file:
-      - .env.render
+      - .env.docker
     depends_on:
       - db
       - redis
@@ -69,7 +69,7 @@ services:
       --broker=redis://redis:6379/0 
       --basic_auth=admin:admin
     env_file:
-      - .env.render
+      - .env.docker
     depends_on:
       - redis
       - celery_worker
