@@ -6,9 +6,14 @@ on:
   pull_request:
     branches: [ master ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:16-alpine
@@ -37,6 +42,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -108,6 +114,6 @@ jobs:
           script: |
             cd /home/deploy/LifeWrapped/LifeWrapped
             git pull origin master
-            docker-compose down
-            docker-compose up -d --build
+            docker-compose up -d --build --pull
+            docker image prune -f
             echo "Новая версия запущена!"
