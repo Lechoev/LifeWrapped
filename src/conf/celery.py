@@ -16,6 +16,8 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-celery_app.autodiscover_tasks([
-    "src.auth_user",
-])
+celery_app.autodiscover_tasks(
+    [
+        "src.auth_user",
+    ]
+)

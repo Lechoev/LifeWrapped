@@ -1,8 +1,10 @@
-import pytest
 from datetime import date
 from unittest.mock import AsyncMock, Mock
+
+import pytest
+
+from src.goals.exceptions import GoalNotFound, ParentNotFoundError
 from src.goals.services import GoalService
-from src.goals.exceptions import ParentNotFoundError, GoalNotFound
 
 
 class MockUoW:
@@ -50,7 +52,7 @@ async def test_create_goal_success_without_parent():
         "category": "books",
         "target_value": 10,
         "unit": "книг",
-        "end_date": date(2024, 12, 31)
+        "end_date": date(2024, 12, 31),
     }
 
     result = await service.create_goal(goal_data)
@@ -63,9 +65,7 @@ async def test_create_goal_success_without_parent():
     assert result.unit == "книг"
     assert result.end_date == date(2024, 12, 31)
 
-    mock_uow.goals.create_goal.assert_called_once_with(
-        data={"user_id": 1, **goal_data}
-    )
+    mock_uow.goals.create_goal.assert_called_once_with(data={"user_id": 1, **goal_data})
 
 
 @pytest.mark.asyncio
@@ -92,7 +92,7 @@ async def test_create_goal_success_with_parent():
         "title": "Run 100 km",
         "category": "health",
         "target_value": 100,
-        "unit": "км"
+        "unit": "км",
     }
 
     result = await service.create_goal(goal_data)
@@ -103,9 +103,7 @@ async def test_create_goal_success_with_parent():
     assert result.parent_id == 1
 
     mock_uow.goals.check_parent_exists.assert_called_once_with(1, 1)
-    mock_uow.goals.create_goal.assert_called_once_with(
-        data={"user_id": 1, **goal_data}
-    )
+    mock_uow.goals.create_goal.assert_called_once_with(data={"user_id": 1, **goal_data})
 
 
 @pytest.mark.asyncio
@@ -123,7 +121,7 @@ async def test_create_goal_parent_not_found():
         "user_id": 1,
         "parent_id": 999,
         "title": "Test Goal",
-        "category": "test"
+        "category": "test",
     }
 
     with pytest.raises(ParentNotFoundError) as exc_info:
@@ -239,10 +237,7 @@ async def test_update_goal_success_without_parent():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    update_data = {
-        "title": "Updated Title",
-        "current_value": 5
-    }
+    update_data = {"title": "Updated Title", "current_value": 5}
 
     result = await service.update_goal(goal_id=1, user_id=1, goal_data=update_data)
 
@@ -271,10 +266,7 @@ async def test_update_goal_success_with_parent():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    update_data = {
-        "parent_id": 10,
-        "title": "Updated with new parent"
-    }
+    update_data = {"parent_id": 10, "title": "Updated with new parent"}
 
     result = await service.update_goal(goal_id=2, user_id=1, goal_data=update_data)
 
@@ -296,10 +288,7 @@ async def test_update_goal_parent_not_found():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    update_data = {
-        "parent_id": 999,
-        "title": "Updated"
-    }
+    update_data = {"parent_id": 999, "title": "Updated"}
 
     with pytest.raises(ParentNotFoundError) as exc_info:
         await service.update_goal(goal_id=1, user_id=1, goal_data=update_data)
@@ -318,10 +307,7 @@ async def test_update_goal_self_parent():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    update_data = {
-        "parent_id": 1,
-        "title": "Updated"
-    }
+    update_data = {"parent_id": 1, "title": "Updated"}
 
     with pytest.raises(ParentNotFoundError) as exc_info:
         await service.update_goal(goal_id=1, user_id=1, goal_data=update_data)
@@ -347,10 +333,7 @@ async def test_update_goal_remove_parent():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    update_data = {
-        "parent_id": None,
-        "title": "Updated without parent"
-    }
+    update_data = {"parent_id": None, "title": "Updated without parent"}
 
     result = await service.update_goal(goal_id=1, user_id=1, goal_data=update_data)
 
@@ -382,7 +365,7 @@ async def test_update_goal_complete():
     update_data = {
         "current_value": 100,
         "is_completed": True,
-        "completed_at": date.today()
+        "completed_at": date.today(),
     }
 
     result = await service.update_goal(goal_id=1, user_id=1, goal_data=update_data)
@@ -412,11 +395,7 @@ async def test_create_goal_minimal_data():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    goal_data = {
-        "user_id": 1,
-        "title": "Minimal Goal",
-        "category": "test"
-    }
+    goal_data = {"user_id": 1, "title": "Minimal Goal", "category": "test"}
 
     result = await service.create_goal(goal_data)
 
@@ -424,9 +403,7 @@ async def test_create_goal_minimal_data():
     assert result.category == "test"
     assert result.current_value == 0
     assert result.is_completed is False
-    mock_uow.goals.create_goal.assert_called_once_with(
-        data={"user_id": 1, **goal_data}
-    )
+    mock_uow.goals.create_goal.assert_called_once_with(data={"user_id": 1, **goal_data})
 
 
 @pytest.mark.asyncio
@@ -447,10 +424,7 @@ async def test_update_goal_partial_data():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    update_data = {
-        "title": "Partially Updated",
-        "current_value": 50
-    }
+    update_data = {"title": "Partially Updated", "current_value": 50}
 
     result = await service.update_goal(goal_id=1, user_id=1, goal_data=update_data)
 
@@ -484,7 +458,7 @@ async def test_create_goal_with_qualitative_data():
         "title": "Learn Guitar",
         "category": "hobby",
         "target_value": None,
-        "unit": None
+        "unit": None,
     }
 
     result = await service.create_goal(goal_data)
@@ -492,9 +466,7 @@ async def test_create_goal_with_qualitative_data():
     assert result.target_value is None
     assert result.unit is None
     assert result.current_value == 0
-    mock_uow.goals.create_goal.assert_called_once_with(
-        data={"user_id": 1, **goal_data}
-    )
+    mock_uow.goals.create_goal.assert_called_once_with(data={"user_id": 1, **goal_data})
 
 
 @pytest.mark.asyncio
@@ -544,16 +516,14 @@ async def test_create_goal_with_large_values():
         "title": "Big Goal",
         "category": "finance",
         "target_value": 1000000,
-        "current_value": 500000
+        "current_value": 500000,
     }
 
     result = await service.create_goal(goal_data)
 
     assert result.target_value == 1000000
     assert result.current_value == 500000
-    mock_uow.goals.create_goal.assert_called_once_with(
-        data={"user_id": 1, **goal_data}
-    )
+    mock_uow.goals.create_goal.assert_called_once_with(data={"user_id": 1, **goal_data})
 
 
 @pytest.mark.asyncio
@@ -575,7 +545,7 @@ async def test_update_goal_with_special_characters():
 
     update_data = {
         "title": "Тест с русскими символами áéíóú 🚀",
-        "description": "Описание с emoji 😊"
+        "description": "Описание с emoji 😊",
     }
 
     result = await service.update_goal(goal_id=1, user_id=1, goal_data=update_data)
@@ -596,11 +566,7 @@ async def test_create_goal_repository_error():
 
     service = GoalService(uow_factory=mock_uow_factory)
 
-    goal_data = {
-        "user_id": 1,
-        "title": "Test",
-        "category": "test"
-    }
+    goal_data = {"user_id": 1, "title": "Test", "category": "test"}
 
     with pytest.raises(Exception) as exc_info:
         await service.create_goal(goal_data)

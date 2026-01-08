@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
-from src.conf import settings
-from src.conf.logger import get_logger
+from src.auth_user.decorators import auth_exceptions
+from src.auth_user.dependencies import get_auth_service, get_current_verified_user
 from src.auth_user.schemas import AuthSchema, VerificationCodeSchema
 from src.auth_user.services import AuthService
-from src.auth_user.dependencies import get_auth_service, get_current_verified_user
-from src.auth_user.decorators import auth_exceptions
+from src.conf import settings
+from src.conf.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -34,8 +34,7 @@ async def authenticate(
     logger.info("Authenticate attempt", extra={"email": data.email})
 
     access_token, refresh_token, user = await service.authenticate_with_code(
-        email=data.email,
-        code=data.code
+        email=data.email, code=data.code
     )
 
     response = JSONResponse(
@@ -43,9 +42,9 @@ async def authenticate(
             "access_token": access_token,
             "token_type": "bearer",
             "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            "user": user
+            "user": user,
         },
-        status_code=status.HTTP_200_OK
+        status_code=status.HTTP_200_OK,
     )
 
     response.set_cookie(
@@ -55,7 +54,7 @@ async def authenticate(
         secure=not settings.DEBUG,
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-        path="/"
+        path="/",
     )
 
     return response
@@ -72,8 +71,7 @@ async def refresh(
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token отсутствует"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token отсутствует"
         )
 
     new_access_token, new_refresh_token = await service.refresh_tokens(refresh_token)
@@ -82,7 +80,7 @@ async def refresh(
         content={
             "access_token": new_access_token,
             "token_type": "bearer",
-            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
     )
 
@@ -94,7 +92,7 @@ async def refresh(
         secure=not settings.DEBUG,
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-        path="/"
+        path="/",
     )
 
     return response
@@ -113,8 +111,7 @@ async def logout(
     await service.logout(current_user, refresh_token)
 
     response = JSONResponse(
-        content={"msg": "Успешный выход"},
-        status_code=status.HTTP_200_OK
+        content={"msg": "Успешный выход"}, status_code=status.HTTP_200_OK
     )
 
     response.delete_cookie(key="refresh_token", path="/")
@@ -133,7 +130,7 @@ async def logout_all(
 
     response = JSONResponse(
         content={"msg": "Успешный выход со всех устройств"},
-        status_code=status.HTTP_200_OK
+        status_code=status.HTTP_200_OK,
     )
 
     response.delete_cookie(key="refresh_token", path="/")
@@ -146,7 +143,7 @@ async def get_current_user_info(
 ) -> dict:
     return {
         "id": current_user,
-        "message": "Используйте профиль для получения полной информации"
+        "message": "Используйте профиль для получения полной информации",
     }
 
 

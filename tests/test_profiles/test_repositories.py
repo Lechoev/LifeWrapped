@@ -1,8 +1,10 @@
-import pytest
 from datetime import date
-from src.profiles.repositories import ProfileRepository
-from src.profiles.models import ProfileModel
+
+import pytest
+
 from src.auth_user.models import AuthModel
+from src.profiles.models import ProfileModel
+from src.profiles.repositories import ProfileRepository
 
 
 @pytest.mark.asyncio
@@ -18,7 +20,7 @@ async def test_create_profile(async_session):
         "first_name": "John",
         "last_name": "Doe",
         "bio": "Software Developer",
-        "birth_date": date(1990, 1, 1)
+        "birth_date": date(1990, 1, 1),
     }
 
     await repo.create_profile(profile_data)
@@ -41,11 +43,7 @@ async def test_get_profile_by_user_id(async_session):
     async_session.add(user)
     await async_session.commit()
 
-    profile = ProfileModel(
-        user_id=user.id,
-        first_name="Alice",
-        last_name="Smith"
-    )
+    profile = ProfileModel(user_id=user.id, first_name="Alice", last_name="Smith")
     async_session.add(profile)
     await async_session.commit()
 
@@ -79,10 +77,7 @@ async def test_update_profile(async_session):
     await async_session.commit()
 
     profile = ProfileModel(
-        user_id=user.id,
-        first_name="Old",
-        last_name="Name",
-        bio="Old bio"
+        user_id=user.id, first_name="Old", last_name="Name", bio="Old bio"
     )
     async_session.add(profile)
     await async_session.commit()
@@ -91,7 +86,7 @@ async def test_update_profile(async_session):
         "first_name": "New",
         "last_name": "Name",
         "bio": "Updated bio",
-        "birth_date": date(1995, 5, 15)
+        "birth_date": date(1995, 5, 15),
     }
 
     updated_profile = await repo.update_profile(user.id, update_data)
@@ -118,15 +113,12 @@ async def test_update_partial_profile(async_session):
         first_name="John",
         last_name="Doe",
         bio="Original bio",
-        birth_date=date(1990, 1, 1)
+        birth_date=date(1990, 1, 1),
     )
     async_session.add(profile)
     await async_session.commit()
 
-    updated_profile = await repo.update_profile(
-        user.id,
-        {"first_name": "Jonathan"}
-    )
+    updated_profile = await repo.update_profile(user.id, {"first_name": "Jonathan"})
     await async_session.commit()
 
     assert updated_profile.first_name == "Jonathan"
@@ -143,9 +135,6 @@ async def test_update_profile_not_found(async_session):
     async_session.add(user)
     await async_session.commit()
 
-    updated_profile = await repo.update_profile(
-        user.id,
-        {"first_name": "New Name"}
-    )
+    updated_profile = await repo.update_profile(user.id, {"first_name": "New Name"})
 
     assert updated_profile is None

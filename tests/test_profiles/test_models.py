@@ -1,6 +1,6 @@
-import pytest
 from datetime import date
-from src.goals.models import GoalModel, ProgressEventModel, ImageModel
+
+from src.goals.models import GoalModel, ImageModel, ProgressEventModel
 
 
 def test_goal_model_creation():

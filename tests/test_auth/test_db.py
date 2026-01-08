@@ -1,6 +1,8 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, UTC, timedelta
 from sqlalchemy import select
+
 from src.auth_user.models import AuthModel, RefreshTokenModel
 
 
@@ -60,12 +62,12 @@ async def test_authenticate_with_code(async_session, mock_cache, uow_factory):
         user = await uow.auth.create_user(email)
 
         from src.auth_user.models import VerificationCodeModel
+
         code_obj = VerificationCodeModel(email=email, code=test_code)
         uow.session.add(code_obj)
 
     access_token, refresh_token, user_data = await service.authenticate_with_code(
-        email=email,
-        code=test_code
+        email=email, code=test_code
     )
 
     assert access_token is not None
@@ -83,8 +85,8 @@ async def test_authenticate_with_code(async_session, mock_cache, uow_factory):
 
 @pytest.mark.asyncio
 async def test_refresh_tokens(async_session, mock_cache, uow_factory):
-    from src.auth_user.services import AuthService
     from src.auth_user.security import hash_refresh_token
+    from src.auth_user.services import AuthService
 
     service = AuthService(uow_factory=uow_factory, cache=mock_cache)
     email = "refresh_test@example.com"
@@ -98,13 +100,13 @@ async def test_refresh_tokens(async_session, mock_cache, uow_factory):
         expires_at = datetime.now(UTC) + timedelta(days=7)
 
         refresh_token_obj = RefreshTokenModel(
-            user_id=user.id,
-            token_hash=token_hash,
-            expires_at=expires_at
+            user_id=user.id, token_hash=token_hash, expires_at=expires_at
         )
         uow.session.add(refresh_token_obj)
 
-    new_access_token, new_refresh_token = await service.refresh_tokens(test_refresh_token)
+    new_access_token, new_refresh_token = await service.refresh_tokens(
+        test_refresh_token
+    )
 
     assert new_access_token is not None
     assert new_refresh_token is not None
@@ -137,8 +139,8 @@ async def test_rate_limiting(async_session, mock_cache, uow_factory):
 
 @pytest.mark.asyncio
 async def test_invalid_verification_code(async_session, mock_cache, uow_factory):
-    from src.auth_user.services import AuthService
     from src.auth_user import exceptions
+    from src.auth_user.services import AuthService
 
     service = AuthService(uow_factory=uow_factory, cache=mock_cache)
     email = "invalid_code_test@example.com"
@@ -154,8 +156,8 @@ async def test_invalid_verification_code(async_session, mock_cache, uow_factory)
 
 @pytest.mark.asyncio
 async def test_logout(async_session, mock_cache, uow_factory):
-    from src.auth_user.services import AuthService
     from src.auth_user.security import hash_refresh_token
+    from src.auth_user.services import AuthService
 
     service = AuthService(uow_factory=uow_factory, cache=mock_cache)
     email = "logout_test@example.com"
@@ -169,9 +171,7 @@ async def test_logout(async_session, mock_cache, uow_factory):
         expires_at = datetime.now(UTC) + timedelta(days=7)
 
         refresh_token = RefreshTokenModel(
-            user_id=user.id,
-            token_hash=token_hash,
-            expires_at=expires_at
+            user_id=user.id, token_hash=token_hash, expires_at=expires_at
         )
         uow.session.add(refresh_token)
 
@@ -189,8 +189,8 @@ async def test_logout(async_session, mock_cache, uow_factory):
 
 @pytest.mark.asyncio
 async def test_logout_all(async_session, mock_cache, uow_factory):
-    from src.auth_user.services import AuthService
     from src.auth_user.security import hash_refresh_token
+    from src.auth_user.services import AuthService
 
     service = AuthService(uow_factory=uow_factory, cache=mock_cache)
     email = "logout_all_test@example.com"
@@ -204,9 +204,7 @@ async def test_logout_all(async_session, mock_cache, uow_factory):
             expires_at = datetime.now(UTC) + timedelta(days=7)
 
             refresh_token = RefreshTokenModel(
-                user_id=user.id,
-                token_hash=token_hash,
-                expires_at=expires_at
+                user_id=user.id, token_hash=token_hash, expires_at=expires_at
             )
             uow.session.add(refresh_token)
 
@@ -224,8 +222,8 @@ async def test_logout_all(async_session, mock_cache, uow_factory):
 
 @pytest.mark.asyncio
 async def test_cleanup_expired_tokens(async_session, mock_cache, uow_factory):
-    from src.auth_user.services import AuthService
     from src.auth_user.security import hash_refresh_token
+    from src.auth_user.services import AuthService
 
     service = AuthService(uow_factory=uow_factory, cache=mock_cache)
     email = "cleanup_test@example.com"
@@ -238,9 +236,7 @@ async def test_cleanup_expired_tokens(async_session, mock_cache, uow_factory):
         expired_at = datetime.now(UTC) - timedelta(days=1)
 
         expired_token = RefreshTokenModel(
-            user_id=user.id,
-            token_hash=expired_token_hash,
-            expires_at=expired_at
+            user_id=user.id, token_hash=expired_token_hash, expires_at=expired_at
         )
         uow.session.add(expired_token)
 
@@ -248,9 +244,7 @@ async def test_cleanup_expired_tokens(async_session, mock_cache, uow_factory):
         valid_at = datetime.now(UTC) + timedelta(days=7)
 
         valid_token = RefreshTokenModel(
-            user_id=user.id,
-            token_hash=valid_token_hash,
-            expires_at=valid_at
+            user_id=user.id, token_hash=valid_token_hash, expires_at=valid_at
         )
         uow.session.add(valid_token)
 
@@ -259,11 +253,15 @@ async def test_cleanup_expired_tokens(async_session, mock_cache, uow_factory):
     assert cleaned_count == 1
 
     result = await async_session.execute(
-        select(RefreshTokenModel).where(RefreshTokenModel.token_hash == expired_token_hash)
+        select(RefreshTokenModel).where(
+            RefreshTokenModel.token_hash == expired_token_hash
+        )
     )
     assert result.scalar_one_or_none() is None
 
     result = await async_session.execute(
-        select(RefreshTokenModel).where(RefreshTokenModel.token_hash == valid_token_hash)
+        select(RefreshTokenModel).where(
+            RefreshTokenModel.token_hash == valid_token_hash
+        )
     )
     assert result.scalar_one_or_none() is not None

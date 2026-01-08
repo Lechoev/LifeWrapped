@@ -39,24 +39,30 @@ class UnitOfWork:
     @property
     def goals(self) -> GoalRepository:
         """Ленивая загрузка репозитория целей"""
-        if 'goals' not in self._repositories_cache:
+        if "goals" not in self._repositories_cache:
             if not self.session:
-                raise RuntimeError("Session not initialized. Use UoW in context manager")
-            self._repositories_cache['goals'] = GoalRepository(self.session)
-        return self._repositories_cache['goals']
+                raise RuntimeError(
+                    "Session not initialized. Use UoW in context manager"
+                )
+            self._repositories_cache["goals"] = GoalRepository(self.session)
+        return self._repositories_cache["goals"]
 
     @property
     def profiles(self) -> ProfileRepository:
-        if 'profiles' not in self._repositories_cache:
+        if "profiles" not in self._repositories_cache:
             if not self.session:
-                raise RuntimeError("Session not initialized. Use UoW in context manager")
-            self._repositories_cache['profiles'] = ProfileRepository(self.session)
-        return self._repositories_cache['profiles']
+                raise RuntimeError(
+                    "Session not initialized. Use UoW in context manager"
+                )
+            self._repositories_cache["profiles"] = ProfileRepository(self.session)
+        return self._repositories_cache["profiles"]
 
     @property
     def auth(self) -> AuthRepository:
-        if 'auth' not in self._repositories_cache:
+        if "auth" not in self._repositories_cache:
             if not self.session:
-                raise RuntimeError("Session not initialized. Use UoW in context manager")
-            self._repositories_cache['auth'] = AuthRepository(self.session)
-        return self._repositories_cache['auth']
+                raise RuntimeError(
+                    "Session not initialized. Use UoW in context manager"
+                )
+            self._repositories_cache["auth"] = AuthRepository(self.session)
+        return self._repositories_cache["auth"]

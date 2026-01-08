@@ -1,10 +1,10 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
-from sqlalchemy import select, delete, update
+from sqlalchemy import delete, not_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth_user.models import AuthModel, RefreshTokenModel, VerificationCodeModel
 from src.conf.logger import get_logger
-from src.auth_user.models import AuthModel, VerificationCodeModel, RefreshTokenModel
 
 logger = get_logger(__name__)
 
@@ -30,9 +30,7 @@ class AuthRepository:
     async def delete_verification_codes(self, email: str):
         logger.debug("DB delete verification codes", extra={"email": email})
         await self.session.execute(
-            delete(VerificationCodeModel).where(
-                VerificationCodeModel.email == email
-            )
+            delete(VerificationCodeModel).where(VerificationCodeModel.email == email)
         )
 
     async def create_verification_code(self, email: str) -> VerificationCodeModel:
@@ -42,41 +40,45 @@ class AuthRepository:
         await self.session.flush()
         return code_obj
 
-    async def find_verification_code(self, email: str, code: str) -> VerificationCodeModel | None:
+    async def find_verification_code(
+        self, email: str, code: str
+    ) -> VerificationCodeModel | None:
         logger.debug("DB find verification code", extra={"email": email})
         result = await self.session.execute(
             select(VerificationCodeModel)
             .where(
-                VerificationCodeModel.email == email,
-                VerificationCodeModel.code == code
+                VerificationCodeModel.email == email, VerificationCodeModel.code == code
             )
             .order_by(VerificationCodeModel.created_at.desc())
         )
         return result.scalar_one_or_none()
 
-    async def save_refresh_token(self, user_id: int, token_hash: str, expires_at: datetime) -> RefreshTokenModel:
+    async def save_refresh_token(
+        self, user_id: int, token_hash: str, expires_at: datetime
+    ) -> RefreshTokenModel:
         logger.debug("DB save refresh token", extra={"user_id": user_id})
         token = RefreshTokenModel(
-            user_id=user_id,
-            token_hash=token_hash,
-            expires_at=expires_at
+            user_id=user_id, token_hash=token_hash, expires_at=expires_at
         )
         self.session.add(token)
         await self.session.flush()
         return token
 
-    async def find_valid_refresh_token(self, user_id: int, plain_token: str) -> RefreshTokenModel | None:
+    async def find_valid_refresh_token(
+        self, user_id: int, plain_token: str
+    ) -> RefreshTokenModel | None:
         logger.debug("DB find valid refresh token by user", extra={"user_id": user_id})
         result = await self.session.execute(
             select(RefreshTokenModel).where(
                 RefreshTokenModel.user_id == user_id,
                 RefreshTokenModel.expires_at > datetime.now(UTC),
-                RefreshTokenModel.revoked == False
+                not_(RefreshTokenModel.revoked),
             )
         )
         tokens = result.scalars().all()
 
         from src.auth_user.security import verify_refresh_token
+
         for token in tokens:
             if verify_refresh_token(token.token_hash, plain_token):
                 return token
@@ -101,17 +103,20 @@ class AuthRepository:
         logger.info("DB expired refresh tokens cleaned", extra={"count": count})
         return count
 
-    async def find_valid_refresh_token_by_token(self, plain_token: str) -> RefreshTokenModel | None:
+    async def find_valid_refresh_token_by_token(
+        self, plain_token: str
+    ) -> RefreshTokenModel | None:
         logger.debug("DB find valid refresh token by plain token")
         result = await self.session.execute(
             select(RefreshTokenModel).where(
                 RefreshTokenModel.expires_at > datetime.now(UTC),
-                RefreshTokenModel.revoked == False
+                not_(RefreshTokenModel.revoked),
             )
         )
         all_tokens = result.scalars().all()
 
         from src.auth_user.security import verify_refresh_token
+
         for token in all_tokens:
             if verify_refresh_token(token.token_hash, plain_token):
                 return token

@@ -1,12 +1,9 @@
 import secrets
-
-from datetime import UTC
-from datetime import datetime, timedelta
-
-from jose import jwt, JWTError
-from passlib.context import CryptContext
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 from src.conf.settings import settings
 
@@ -37,7 +34,12 @@ def get_user_id_from_access_token(token: str) -> int:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный токен")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный токен"
+            )
         return int(user_id)
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный или просроченный токен")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный или просроченный токен",
+        )

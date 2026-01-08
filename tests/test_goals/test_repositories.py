@@ -1,9 +1,11 @@
-import pytest
 from datetime import date
-from src.goals.repositories import GoalRepository
-from src.goals.models import GoalModel, ProgressEventModel
-from src.goals.exceptions import IdNotFoundError
+
+import pytest
+
 from src.auth_user.models import AuthModel
+from src.goals.exceptions import IdNotFoundError
+from src.goals.models import GoalModel
+from src.goals.repositories import GoalRepository
 
 
 @pytest.mark.asyncio
@@ -20,7 +22,7 @@ async def test_create_goal_success(async_session):
         "category": "books",
         "target_value": 10,
         "unit": "книг",
-        "end_date": date(2024, 12, 31)
+        "end_date": date(2024, 12, 31),
     }
 
     created_goal = await repo.create_goal(goal_data)
@@ -46,11 +48,7 @@ async def test_create_goal_with_parent(async_session):
     async_session.add(user)
     await async_session.flush()
 
-    parent_goal = GoalModel(
-        user_id=user.id,
-        title="Improve Health",
-        category="health"
-    )
+    parent_goal = GoalModel(user_id=user.id, title="Improve Health", category="health")
     async_session.add(parent_goal)
     await async_session.flush()
 
@@ -60,7 +58,7 @@ async def test_create_goal_with_parent(async_session):
         "title": "Run 100 km",
         "category": "health",
         "target_value": 100,
-        "unit": "км"
+        "unit": "км",
     }
 
     child_goal = await repo.create_goal(child_goal_data)
@@ -80,11 +78,7 @@ async def test_get_by_id_success(async_session):
     async_session.add(user)
     await async_session.flush()
 
-    goal = GoalModel(
-        user_id=user.id,
-        title="Test Goal",
-        category="test"
-    )
+    goal = GoalModel(user_id=user.id, title="Test Goal", category="test")
     async_session.add(goal)
     await async_session.commit()
 
@@ -118,11 +112,7 @@ async def test_get_by_id_wrong_user(async_session):
     async_session.add_all([user1, user2])
     await async_session.flush()
 
-    goal = GoalModel(
-        user_id=user1.id,
-        title="User1 Goal",
-        category="test"
-    )
+    goal = GoalModel(user_id=user1.id, title="User1 Goal", category="test")
     async_session.add(goal)
     await async_session.commit()
 
@@ -142,7 +132,7 @@ async def test_get_all_by_user(async_session):
     goals_data = [
         {"user_id": user.id, "title": "Goal 1", "category": "books"},
         {"user_id": user.id, "title": "Goal 2", "category": "health"},
-        {"user_id": user.id, "title": "Goal 3", "category": "travel"}
+        {"user_id": user.id, "title": "Goal 3", "category": "travel"},
     ]
 
     for data in goals_data:
@@ -200,11 +190,7 @@ async def test_check_parent_exists_true(async_session):
     async_session.add(user)
     await async_session.flush()
 
-    parent_goal = GoalModel(
-        user_id=user.id,
-        title="Parent Goal",
-        category="test"
-    )
+    parent_goal = GoalModel(user_id=user.id, title="Parent Goal", category="test")
     async_session.add(parent_goal)
     await async_session.commit()
 
@@ -235,11 +221,7 @@ async def test_check_parent_exists_wrong_user(async_session):
     async_session.add_all([user1, user2])
     await async_session.flush()
 
-    parent_goal = GoalModel(
-        user_id=user1.id,
-        title="Parent Goal",
-        category="test"
-    )
+    parent_goal = GoalModel(user_id=user1.id, title="Parent Goal", category="test")
     async_session.add(parent_goal)
     await async_session.commit()
 
@@ -261,7 +243,7 @@ async def test_update_goal_success(async_session):
         title="Old Title",
         category="books",
         target_value=10,
-        current_value=0
+        current_value=0,
     )
     async_session.add(goal)
     await async_session.commit()
@@ -271,7 +253,7 @@ async def test_update_goal_success(async_session):
         "category": "health",
         "target_value": 20,
         "current_value": 5,
-        "is_completed": True
+        "is_completed": True,
     }
 
     updated_goal = await repo.update_goal(goal.id, user.id, update_data)
@@ -299,7 +281,7 @@ async def test_update_goal_partial(async_session):
         title="Original Title",
         category="books",
         description="Original description",
-        target_value=10
+        target_value=10,
     )
     async_session.add(goal)
     await async_session.commit()
@@ -323,7 +305,9 @@ async def test_update_goal_not_found(async_session):
     async_session.add(user)
     await async_session.commit()
 
-    with pytest.raises(IdNotFoundError, match="Цель 99999 не найдена или не принадлежит вам"):
+    with pytest.raises(
+        IdNotFoundError, match="Цель 99999 не найдена или не принадлежит вам"
+    ):
         await repo.update_goal(99999, user.id, {"title": "New Title"})
 
 
@@ -336,15 +320,13 @@ async def test_update_goal_wrong_user(async_session):
     async_session.add_all([user1, user2])
     await async_session.flush()
 
-    goal = GoalModel(
-        user_id=user1.id,
-        title="User1 Goal",
-        category="test"
-    )
+    goal = GoalModel(user_id=user1.id, title="User1 Goal", category="test")
     async_session.add(goal)
     await async_session.commit()
 
-    with pytest.raises(IdNotFoundError, match=f"Цель {goal.id} не найдена или не принадлежит вам"):
+    with pytest.raises(
+        IdNotFoundError, match=f"Цель {goal.id} не найдена или не принадлежит вам"
+    ):
         await repo.update_goal(goal.id, user2.id, {"title": "Hacked Title"})
 
 
@@ -362,15 +344,12 @@ async def test_update_goal_completion_logic(async_session):
         category="books",
         target_value=10,
         current_value=8,
-        is_completed=False
+        is_completed=False,
     )
     async_session.add(goal)
     await async_session.commit()
 
-    update_data = {
-        "current_value": 10,
-        "is_completed": True
-    }
+    update_data = {"current_value": 10, "is_completed": True}
 
     updated_goal = await repo.update_goal(goal.id, user.id, update_data)
     await async_session.commit()
@@ -387,11 +366,7 @@ async def test_update_goal_with_invalid_data(async_session):
     async_session.add(user)
     await async_session.flush()
 
-    goal = GoalModel(
-        user_id=user.id,
-        title="Test Goal",
-        category="test"
-    )
+    goal = GoalModel(user_id=user.id, title="Test Goal", category="test")
     async_session.add(goal)
     await async_session.commit()
 
@@ -414,7 +389,7 @@ async def test_repository_integration(async_session):
         "user_id": user.id,
         "title": "Parent Goal",
         "category": "health",
-        "target_value": None
+        "target_value": None,
     }
     parent_goal = await repo.create_goal(parent_data)
 
@@ -427,7 +402,7 @@ async def test_repository_integration(async_session):
         "title": "Child Goal",
         "category": "health",
         "target_value": 100,
-        "unit": "km"
+        "unit": "km",
     }
     child_goal = await repo.create_goal(child_data)
 
@@ -438,10 +413,7 @@ async def test_repository_integration(async_session):
     assert retrieved_child.title == "Child Goal"
     assert retrieved_child.parent_id == parent_goal.id
 
-    update_data = {
-        "current_value": 50,
-        "title": "Updated Child Goal"
-    }
+    update_data = {"current_value": 50, "title": "Updated Child Goal"}
     updated_child = await repo.update_goal(child_goal.id, user.id, update_data)
     assert updated_child.current_value == 50
     assert updated_child.title == "Updated Child Goal"

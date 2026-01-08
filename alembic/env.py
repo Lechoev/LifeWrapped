@@ -22,7 +22,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 from src import conf
 
-current_url = config.get_main_option('sqlalchemy.url', None)
+current_url = config.get_main_option("sqlalchemy.url", None)
 if not current_url:
     config.set_main_option("sqlalchemy.url", conf.settings.database_url)
 target_metadata = conf.Base.metadata

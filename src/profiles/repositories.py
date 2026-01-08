@@ -11,7 +11,9 @@ class ProfileRepository:
         self.session = session
 
     async def check_profile(self, user_id: int):
-        result = await self.session.execute(select(1).where(ProfileModel.user_id == user_id))
+        result = await self.session.execute(
+            select(1).where(ProfileModel.user_id == user_id)
+        )
         return result.scalar_one_or_none()
 
     async def create_profile(self, data: dict):
@@ -34,5 +36,7 @@ class ProfileRepository:
         return row[0]
 
     async def get_profile(self, user_id: int):
-        result = await self.session.execute(select(ProfileModel).where(ProfileModel.user_id == user_id))
+        result = await self.session.execute(
+            select(ProfileModel).where(ProfileModel.user_id == user_id)
+        )
         return result.scalar_one_or_none()

@@ -1,10 +1,10 @@
-from sqlalchemy import select, exists, update
+from sqlalchemy import exists, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.goals.models import GoalModel
-from src.goals.exceptions import IdNotFoundError
 from src.conf.logger import get_logger
+from src.goals.exceptions import IdNotFoundError
+from src.goals.models import GoalModel
 
 logger = get_logger(__name__)
 
@@ -18,7 +18,10 @@ class GoalRepository:
             goal = GoalModel(**data)
             self.session.add(goal)
             await self.session.flush()
-            logger.info("Goal created", extra={"user_id": data.get("user_id"), "goal_id": goal.id})
+            logger.info(
+                "Goal created",
+                extra={"user_id": data.get("user_id"), "goal_id": goal.id},
+            )
             return goal
         except IntegrityError:
             logger.warning("Invalid foreign key", extra={"data": data})
@@ -27,8 +30,7 @@ class GoalRepository:
     async def get_by_id(self, goal_id: int, user_id: int):
         result = await self.session.execute(
             select(GoalModel).where(
-                GoalModel.id == goal_id,
-                GoalModel.user_id == user_id
+                GoalModel.id == goal_id, GoalModel.user_id == user_id
             )
         )
         return result.scalar_one_or_none()
@@ -41,28 +43,30 @@ class GoalRepository:
             .order_by(GoalModel.created_at.desc())
         )
         goals = result.scalars().all()
-        logger.info("Fetched all goals for user", extra={"user_id": user_id, "count": len(goals)})
+        logger.info(
+            "Fetched all goals for user",
+            extra={"user_id": user_id, "count": len(goals)},
+        )
         return goals
 
     async def check_parent_exists(self, parent_id: int, user_id: int) -> bool:
         """Проверить существование родительской цели"""
         result = await self.session.execute(
-            select(exists().where(
-                GoalModel.id == parent_id,
-                GoalModel.user_id == user_id
-            ))
+            select(
+                exists().where(GoalModel.id == parent_id, GoalModel.user_id == user_id)
+            )
         )
         exists_flag = result.scalar()
-        logger.info("Checked parent goal existence", extra={"user_id": user_id, "parent_id": parent_id, "exists": exists_flag})
+        logger.info(
+            "Checked parent goal existence",
+            extra={"user_id": user_id, "parent_id": parent_id, "exists": exists_flag},
+        )
         return exists_flag
 
     async def update_goal(self, goal_id: int, user_id: int, update_data: dict):
         stmt = (
             update(GoalModel)
-            .where(
-                GoalModel.id == goal_id,
-                GoalModel.user_id == user_id
-            )
+            .where(GoalModel.id == goal_id, GoalModel.user_id == user_id)
             .values(**update_data)
             .returning(GoalModel)
         )
@@ -71,8 +75,18 @@ class GoalRepository:
         updated_goal = result.scalar_one_or_none()
 
         if not updated_goal:
-            logger.warning("Goal not found for update", extra={"user_id": user_id, "goal_id": goal_id})
+            logger.warning(
+                "Goal not found for update",
+                extra={"user_id": user_id, "goal_id": goal_id},
+            )
             raise IdNotFoundError(f"Цель {goal_id} не найдена или не принадлежит вам")
 
-        logger.info("Goal updated", extra={"user_id": user_id, "goal_id": goal_id, "update_fields": list(update_data.keys())})
+        logger.info(
+            "Goal updated",
+            extra={
+                "user_id": user_id,
+                "goal_id": goal_id,
+                "update_fields": list(update_data.keys()),
+            },
+        )
         return updated_goal

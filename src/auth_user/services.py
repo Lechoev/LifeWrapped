@@ -1,10 +1,10 @@
-from datetime import datetime, UTC, timedelta
+from datetime import UTC, datetime, timedelta
 
-from src.conf.logger import get_logger
 from src.auth_user import exceptions, security
-from src.conf.settings import settings
-from src.auth_user.tasks import send_email
 from src.auth_user.emails.cache import AsyncCacheInterface
+from src.auth_user.tasks import send_email
+from src.conf.logger import get_logger
+from src.conf.settings import settings
 
 logger = get_logger(__name__)
 
@@ -26,7 +26,9 @@ class AuthService:
             user = await uow.auth.get_user_by_email(email)
             if not user:
                 await uow.auth.create_user(email)
-                logger.info("User created during verification request", extra={"email": email})
+                logger.info(
+                    "User created during verification request", extra={"email": email}
+                )
 
             await uow.auth.delete_verification_codes(email)
             code = await uow.auth.create_verification_code(email)
@@ -34,19 +36,20 @@ class AuthService:
 
             logger.info("Verification code sent", extra={"email": email})
 
-            return {
-                "email": email,
-                "message": "Код отправлен на почту"
-            }
+            return {"email": email, "message": "Код отправлен на почту"}
 
     async def authenticate_with_code(self, email: str, code: str):
-        logger.info("Authentication with verification code started", extra={"email": email})
+        logger.info(
+            "Authentication with verification code started", extra={"email": email}
+        )
 
         async with self.uow_factory() as uow:
             code_obj = await uow.auth.find_verification_code(email, code)
             if not code_obj:
                 logger.warning("Invalid verification code", extra={"email": email})
-                raise exceptions.InvalidVerificationCodeError("Неверный код подтверждения")
+                raise exceptions.InvalidVerificationCodeError(
+                    "Неверный код подтверждения"
+                )
 
             if not code_obj.is_valid():
                 logger.warning("Expired verification code", extra={"email": email})
@@ -58,7 +61,7 @@ class AuthService:
             if not user:
                 logger.error(
                     "Verification code exists but user not found",
-                    extra={"email": email}
+                    extra={"email": email},
                 )
                 raise exceptions.UserNotFoundError(f"Пользователь {email} не найден")
 
@@ -70,26 +73,33 @@ class AuthService:
             access_token = security.create_access_token(user.id)
             refresh_token = security.create_refresh_token()
 
-            expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+            expires_at = datetime.now(UTC) + timedelta(
+                days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+            )
             await uow.auth.save_refresh_token(
                 user_id=user.id,
                 token_hash=security.hash_refresh_token(refresh_token),
-                expires_at=expires_at
+                expires_at=expires_at,
             )
 
-            logger.info("User authenticated successfully", extra={"user_id": user.id, "email": user.email})
+            logger.info(
+                "User authenticated successfully",
+                extra={"user_id": user.id, "email": user.email},
+            )
 
-            return access_token, refresh_token, {
-                "id": user.id,
-                "email": user.email,
-                "is_verified": user.is_verified
-            }
+            return (
+                access_token,
+                refresh_token,
+                {"id": user.id, "email": user.email, "is_verified": user.is_verified},
+            )
 
     async def refresh_tokens(self, refresh_token: str):
         logger.info("Refresh tokens started")
 
         async with self.uow_factory() as uow:
-            valid_token = await uow.auth.find_valid_refresh_token_by_token(refresh_token)
+            valid_token = await uow.auth.find_valid_refresh_token_by_token(
+                refresh_token
+            )
             if not valid_token:
                 logger.warning("Invalid refresh token attempt")
                 raise exceptions.RefreshTokenNotFoundError(
@@ -109,7 +119,7 @@ class AuthService:
             await uow.auth.save_refresh_token(
                 user_id=valid_token.user_id,
                 token_hash=security.hash_refresh_token(new_refresh_token),
-                expires_at=expires_at
+                expires_at=expires_at,
             )
 
             logger.info("Refresh token rotated", extra={"user_id": valid_token.user_id})

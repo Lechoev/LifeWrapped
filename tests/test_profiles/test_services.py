@@ -1,8 +1,10 @@
-import pytest
 from datetime import date
 from unittest.mock import AsyncMock, Mock
-from src.profiles.services import ProfileService
+
+import pytest
+
 from src.profiles import exceptions
+from src.profiles.services import ProfileService
 
 
 class MockUoW:
@@ -41,7 +43,7 @@ async def test_create_profile_success():
         "last_name": "Doe",
         "bio": "Developer",
         "birth_date": date(1990, 1, 1),
-        "avatar_url": "avatar.jpg"
+        "avatar_url": "avatar.jpg",
     }
 
     result = await service.create_profile(user_id=1, profile_data=profile_data)
@@ -98,7 +100,7 @@ async def test_update_profile_success():
         "last_name": "Name",
         "bio": "Updated bio",
         "birth_date": date(1995, 5, 15),
-        "avatar_url": "new_avatar.jpg"
+        "avatar_url": "new_avatar.jpg",
     }
 
     result = await service.update_profile(user_id=1, update_data=update_data)
@@ -110,8 +112,7 @@ async def test_update_profile_success():
     assert result["birth_date"] == mock_profile.birth_date.isoformat()
 
     mock_uow.profiles.update_profile.assert_called_once_with(
-        user_id=1,
-        update_data=update_data
+        user_id=1, update_data=update_data
     )
 
 
@@ -226,7 +227,7 @@ async def test_create_profile_with_none_values():
         "last_name": None,
         "bio": None,
         "birth_date": None,
-        "avatar_url": None
+        "avatar_url": None,
     }
 
     result = await service.create_profile(user_id=1, profile_data=profile_data)
@@ -256,16 +257,12 @@ async def test_update_profile_partial_data():
 
     service = ProfileService(uow_factory=mock_uow_factory)
 
-    update_data = {
-        "first_name": "Partial",
-        "bio": "New bio"
-    }
+    update_data = {"first_name": "Partial", "bio": "New bio"}
 
     result = await service.update_profile(user_id=1, update_data=update_data)
 
     assert result["first_name"] == "Partial"
     assert result["bio"] == "New bio"
     mock_uow.profiles.update_profile.assert_called_once_with(
-        user_id=1,
-        update_data=update_data
+        user_id=1, update_data=update_data
     )

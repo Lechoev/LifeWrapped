@@ -1,28 +1,39 @@
 import random
 import string
 from datetime import datetime, timedelta, timezone
+from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, Integer, DateTime, func, ForeignKey
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src import conf
+
+if TYPE_CHECKING:
+    from src.profiles.models import ProfileModel
 
 
 class AuthModel(conf.Base):
     __tablename__ = "auth"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(
+        String(100), unique=True, index=True, nullable=False
+    )
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     profile: Mapped["ProfileModel"] = relationship(
-        "ProfileModel", uselist=False, back_populates="user", cascade="all, delete-orphan"
+        "ProfileModel",
+        uselist=False,
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
     refresh_tokens: Mapped[list["RefreshTokenModel"]] = relationship(
         "RefreshTokenModel",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="dynamic"
+        lazy="dynamic",
     )
 
     def __str__(self) -> str:
@@ -36,9 +47,7 @@ class VerificationCodeModel(conf.Base):
     email: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     code: Mapped[str] = mapped_column(String(6), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     is_used: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -62,7 +71,7 @@ class VerificationCodeModel(conf.Base):
 
     @classmethod
     def generate_code(cls, email: str) -> "VerificationCodeModel":
-        code = ''.join(random.choices(string.digits, k=6))
+        code = "".join(random.choices(string.digits, k=6))
         return cls(email=email, code=code)
 
 
@@ -70,13 +79,16 @@ class RefreshTokenModel(conf.Base):
     __tablename__ = "refresh_token"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("auth.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("auth.id", ondelete="CASCADE"), index=True
+    )
     token_hash: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     revoked: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     user: Mapped["AuthModel"] = relationship(
-        "AuthModel",
-        back_populates="refresh_tokens"
+        "AuthModel", back_populates="refresh_tokens"
     )

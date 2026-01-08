@@ -1,5 +1,4 @@
 import contextlib
-
 from typing import AsyncIterator, Optional
 
 from sqlalchemy.ext.asyncio import (

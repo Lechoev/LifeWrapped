@@ -1,8 +1,10 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from sqlalchemy import select
-from datetime import datetime, UTC, timedelta
+
+from src.auth_user.models import RefreshTokenModel, VerificationCodeModel
 from src.auth_user.repositories import AuthRepository
-from src.auth_user.models import AuthModel, VerificationCodeModel, RefreshTokenModel
 from src.auth_user.security import hash_refresh_token
 
 
@@ -60,9 +62,7 @@ async def test_repository_refresh_token_operations(async_session):
     expires_at = datetime.now(UTC) + timedelta(days=7)
 
     token = await repo.save_refresh_token(
-        user_id=user.id,
-        token_hash=token_hash,
-        expires_at=expires_at
+        user_id=user.id, token_hash=token_hash, expires_at=expires_at
     )
     await async_session.commit()
 

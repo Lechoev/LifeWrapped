@@ -1,11 +1,10 @@
 import asyncio
+import threading
+from abc import ABC, abstractmethod
+from typing import Optional
 
 import redis
 import redis.asyncio as async_redis
-import threading
-
-from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class AsyncCacheInterface(ABC):
@@ -37,7 +36,7 @@ class SyncCacheInterface(ABC):
 
 
 class SyncRedisCache(SyncCacheInterface):
-    _instance: Optional['SyncRedisCache'] = None
+    _instance: Optional["SyncRedisCache"] = None
     _lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs):
@@ -53,9 +52,7 @@ class SyncRedisCache(SyncCacheInterface):
             return
 
         self._pool = redis.ConnectionPool.from_url(
-            redis_url,
-            decode_responses=True,
-            max_connections=20
+            redis_url, decode_responses=True, max_connections=20
         )
         self._redis = redis.Redis(connection_pool=self._pool)
         self._initialized = True
@@ -77,7 +74,7 @@ class SyncRedisCache(SyncCacheInterface):
 
 
 class AsyncRedisCache(AsyncCacheInterface):
-    _instance: Optional['AsyncRedisCache'] = None
+    _instance: Optional["AsyncRedisCache"] = None
     _lock: Optional[asyncio.Lock] = None
 
     def __init__(self, redis_url: str):
@@ -85,7 +82,7 @@ class AsyncRedisCache(AsyncCacheInterface):
         self._redis: Optional[async_redis.Redis] = None
 
     @classmethod
-    async def get_instance(cls, redis_url: str) -> 'AsyncRedisCache':
+    async def get_instance(cls, redis_url: str) -> "AsyncRedisCache":
         if cls._instance is None:
             if cls._lock is None:
                 cls._lock = asyncio.Lock()
@@ -94,9 +91,7 @@ class AsyncRedisCache(AsyncCacheInterface):
                 if cls._instance is None:
                     instance = cls(redis_url)
                     instance._redis = async_redis.from_url(
-                        redis_url,
-                        decode_responses=True,
-                        max_connections=20
+                        redis_url, decode_responses=True, max_connections=20
                     )
                     cls._instance = instance
         return cls._instance

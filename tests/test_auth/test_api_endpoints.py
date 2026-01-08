@@ -1,10 +1,11 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, UTC, timedelta
 from sqlalchemy import select
 
-from src.auth_user.models import AuthModel, VerificationCodeModel, RefreshTokenModel
-from src.auth_user.security import hash_refresh_token, verify_refresh_token
+from src.auth_user.models import AuthModel, RefreshTokenModel, VerificationCodeModel
 from src.auth_user.repositories import AuthRepository
+from src.auth_user.security import hash_refresh_token, verify_refresh_token
 
 
 def get_unique_email(base_name: str) -> str:
@@ -17,8 +18,7 @@ async def test_request_code_integration(async_client, async_session):
     email = get_unique_email("request_code_test")
 
     response = await async_client.post(
-        "/auth_router/v1/auth/request-code",
-        json={"email": email}
+        "/auth_router/v1/auth/request-code", json={"email": email}
     )
 
     assert response.status_code == 200
@@ -48,14 +48,13 @@ async def test_authenticate_integration(async_client, async_session):
     test_code = "888888"
 
     repo = AuthRepository(async_session)
-    user = await repo.create_user(email)
+    await repo.create_user(email)
     code_obj = await repo.create_verification_code(email)
     code_obj.code = test_code
     await async_session.commit()
 
     response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     assert response.status_code == 200
@@ -86,7 +85,7 @@ async def test_authenticate_integration(async_client, async_session):
     return {
         "access_token": data["access_token"],
         "refresh_token": refresh_token_cookie,
-        "user_id": user.id
+        "user_id": user.id,
     }
 
 
@@ -96,14 +95,13 @@ async def test_refresh_token_integration(async_client, async_session):
     test_code = "777777"
 
     repo = AuthRepository(async_session)
-    user = await repo.create_user(email)
+    await repo.create_user(email)
     code_obj = await repo.create_verification_code(email)
     code_obj.code = test_code
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     assert auth_response.status_code == 200
@@ -111,8 +109,7 @@ async def test_refresh_token_integration(async_client, async_session):
     assert refresh_token_cookie is not None
 
     response = await async_client.post(
-        "/auth_router/v1/auth/refresh",
-        cookies={"refresh_token": refresh_token_cookie}
+        "/auth_router/v1/auth/refresh", cookies={"refresh_token": refresh_token_cookie}
     )
 
     assert response.status_code == 200
@@ -137,8 +134,7 @@ async def test_me_endpoint_integration(async_client, async_session):
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     assert auth_response.status_code == 200
@@ -146,8 +142,7 @@ async def test_me_endpoint_integration(async_client, async_session):
     access_token = auth_data["access_token"]
 
     response = await async_client.get(
-        "/auth_router/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        "/auth_router/v1/auth/me", headers={"Authorization": f"Bearer {access_token}"}
     )
 
     assert response.status_code == 200
@@ -162,14 +157,13 @@ async def test_logout_integration(async_client, async_session):
     test_code = "555555"
 
     repo = AuthRepository(async_session)
-    user = await repo.create_user(email)
+    await repo.create_user(email)
     code_obj = await repo.create_verification_code(email)
     code_obj.code = test_code
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     assert auth_response.status_code == 200
@@ -179,7 +173,7 @@ async def test_logout_integration(async_client, async_session):
     response = await async_client.post(
         "/auth_router/v1/auth/logout",
         headers={"Authorization": f"Bearer {access_token}"},
-        cookies={"refresh_token": refresh_token_cookie}
+        cookies={"refresh_token": refresh_token_cookie},
     )
 
     assert response.status_code == 200
@@ -187,7 +181,10 @@ async def test_logout_integration(async_client, async_session):
     assert "msg" in data
     assert data["msg"] == "Успешный выход"
 
-    assert response.cookies.get("refresh_token") is None or response.cookies.get("refresh_token") == ""
+    assert (
+        response.cookies.get("refresh_token") is None
+        or response.cookies.get("refresh_token") == ""
+    )
 
 
 @pytest.mark.asyncio
@@ -204,9 +201,7 @@ async def test_cleanup_tokens_integration(async_client, async_session):
         expires_at = datetime.now(UTC) - timedelta(days=1)
 
         token = RefreshTokenModel(
-            user_id=user.id,
-            token_hash=token_hash,
-            expires_at=expires_at
+            user_id=user.id, token_hash=token_hash, expires_at=expires_at
         )
         async_session.add(token)
 
@@ -215,9 +210,7 @@ async def test_cleanup_tokens_integration(async_client, async_session):
         expires_at = datetime.now(UTC) + timedelta(days=7)
 
         token = RefreshTokenModel(
-            user_id=user.id,
-            token_hash=token_hash,
-            expires_at=expires_at
+            user_id=user.id, token_hash=token_hash, expires_at=expires_at
         )
         async_session.add(token)
 
@@ -240,8 +233,7 @@ async def test_invalid_code_integration(async_client, async_session):
     await async_session.commit()
 
     response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": "wrong_code"}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": "wrong_code"}
     )
 
     assert response.status_code == 400
@@ -263,8 +255,7 @@ async def test_expired_code_integration(async_client, async_session):
     await async_session.commit()
 
     response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     assert response.status_code == 400

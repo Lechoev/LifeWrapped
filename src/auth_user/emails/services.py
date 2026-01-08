@@ -1,6 +1,6 @@
-from src.conf.logger import get_logger
 from src.auth_user.emails.cache import SyncCacheInterface
 from src.auth_user.emails.sender import EmailSenderInterface
+from src.conf.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -20,9 +20,7 @@ class VerificationEmailService:
         key = self._get_cache_key(email)
 
         is_allowed = self.cache.set_if_not_exists(
-            key=key,
-            value="locked",
-            ttl=self.LOCK_TTL
+            key=key, value="locked", ttl=self.LOCK_TTL
         )
 
         if not is_allowed:

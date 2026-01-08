@@ -1,15 +1,15 @@
-import pytest
-import json
 from datetime import date
-from httpx import AsyncClient
+
+import pytest
 from sqlalchemy import select
 
-from src.goals.models import GoalModel
 from src.auth_user.models import AuthModel, VerificationCodeModel
+from src.goals.models import GoalModel
 
 
 def get_unique_email(base_name: str) -> str:
     import time
+
     timestamp = int(time.time())
     return f"{base_name}_{timestamp}@example.com"
 
@@ -35,8 +35,7 @@ async def test_create_goal_integration(async_client, async_session):
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     assert auth_response.status_code == 200
@@ -49,13 +48,11 @@ async def test_create_goal_integration(async_client, async_session):
         "target_value": 10,
         "unit": "книг",
         "end_date": "2024-12-31",
-        "description": "Read 10 books this year"
+        "description": "Read 10 books this year",
     }
 
     response = await async_client.post(
-        CREATE_GOAL,
-        headers={"Authorization": f"Bearer {access_token}"},
-        json=goal_data
+        CREATE_GOAL, headers={"Authorization": f"Bearer {access_token}"}, json=goal_data
     )
 
     assert response.status_code == 200
@@ -111,15 +108,13 @@ async def test_get_all_goals_integration(async_client, async_session):
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     access_token = auth_response.json()["access_token"]
 
     response = await async_client.get(
-        GET_ALL_GOALS,
-        headers={"Authorization": f"Bearer {access_token}"}
+        GET_ALL_GOALS, headers={"Authorization": f"Bearer {access_token}"}
     )
 
     assert response.status_code == 200
@@ -153,7 +148,7 @@ async def test_get_goal_by_id_integration(async_client, async_session):
         category="books",
         target_value=5,
         unit="книг",
-        description="Read specific books"
+        description="Read specific books",
     )
     async_session.add(goal)
     await async_session.commit()
@@ -164,15 +159,14 @@ async def test_get_goal_by_id_integration(async_client, async_session):
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     access_token = auth_response.json()["access_token"]
 
     response = await async_client.get(
         GET_GOAL.format(goal_id=goal.id),
-        headers={"Authorization": f"Bearer {access_token}"}
+        headers={"Authorization": f"Bearer {access_token}"},
     )
 
     assert response.status_code == 200
@@ -202,7 +196,7 @@ async def test_update_goal_integration(async_client, async_session):
         title="Old Title",
         category="books",
         target_value=10,
-        current_value=0
+        current_value=0,
     )
     async_session.add(goal)
     await async_session.flush()
@@ -214,21 +208,17 @@ async def test_update_goal_integration(async_client, async_session):
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     access_token = auth_response.json()["access_token"]
 
-    update_data = {
-        "title": "New Title",
-        "description": "Updated description"
-    }
+    update_data = {"title": "New Title", "description": "Updated description"}
 
     response = await async_client.patch(
         UPDATE_GOAL.format(goal_id=goal_id),
         headers={"Authorization": f"Bearer {access_token}"},
-        json=update_data
+        json=update_data,
     )
 
     assert response.status_code == 200
@@ -266,8 +256,7 @@ async def test_create_goal_with_parent_integration(async_client, async_session):
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     access_token = auth_response.json()["access_token"]
@@ -275,13 +264,13 @@ async def test_create_goal_with_parent_integration(async_client, async_session):
     parent_goal_data = {
         "title": "Improve Health",
         "category": "health",
-        "description": "Overall health improvement"
+        "description": "Overall health improvement",
     }
 
     parent_response = await async_client.post(
         CREATE_GOAL,
         headers={"Authorization": f"Bearer {access_token}"},
-        json=parent_goal_data
+        json=parent_goal_data,
     )
 
     assert parent_response.status_code == 200
@@ -293,13 +282,13 @@ async def test_create_goal_with_parent_integration(async_client, async_session):
         "category": "health",
         "target_value": 100,
         "unit": "км",
-        "parent_id": parent_id
+        "parent_id": parent_id,
     }
 
     response = await async_client.post(
         CREATE_GOAL,
         headers={"Authorization": f"Bearer {access_token}"},
-        json=child_goal_data
+        json=child_goal_data,
     )
 
     assert response.status_code == 200
@@ -325,8 +314,7 @@ async def test_goal_comprehensive_flow_integration(async_client, async_session):
     await async_session.commit()
 
     auth_response = await async_client.post(
-        "/auth_router/v1/auth/authenticate",
-        json={"email": email, "code": test_code}
+        "/auth_router/v1/auth/authenticate", json={"email": email, "code": test_code}
     )
 
     assert auth_response.status_code == 200
@@ -334,23 +322,9 @@ async def test_goal_comprehensive_flow_integration(async_client, async_session):
     access_token = auth_data["access_token"]
 
     goals_to_create = [
-        {
-            "title": "Goal 1",
-            "category": "books",
-            "target_value": 10,
-            "unit": "книг"
-        },
-        {
-            "title": "Goal 2",
-            "category": "health",
-            "target_value": 100,
-            "unit": "км"
-        },
-        {
-            "title": "Goal 3",
-            "category": "travel",
-            "description": "Travel goal"
-        }
+        {"title": "Goal 1", "category": "books", "target_value": 10, "unit": "книг"},
+        {"title": "Goal 2", "category": "health", "target_value": 100, "unit": "км"},
+        {"title": "Goal 3", "category": "travel", "description": "Travel goal"},
     ]
 
     created_goals = []
@@ -358,15 +332,14 @@ async def test_goal_comprehensive_flow_integration(async_client, async_session):
         response = await async_client.post(
             CREATE_GOAL,
             headers={"Authorization": f"Bearer {access_token}"},
-            json=goal_data
+            json=goal_data,
         )
         assert response.status_code == 200
         created_goal = response.json()["data"]
         created_goals.append(created_goal)
 
     response = await async_client.get(
-        GET_ALL_GOALS,
-        headers={"Authorization": f"Bearer {access_token}"}
+        GET_ALL_GOALS, headers={"Authorization": f"Bearer {access_token}"}
     )
 
     assert response.status_code == 200
@@ -375,8 +348,8 @@ async def test_goal_comprehensive_flow_integration(async_client, async_session):
 
     for goal in created_goals:
         response = await async_client.get(
-            GET_GOAL.format(goal_id=goal['id']),
-            headers={"Authorization": f"Bearer {access_token}"}
+            GET_GOAL.format(goal_id=goal["id"]),
+            headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == 200
         fetched_goal = response.json()["data"]
@@ -384,15 +357,12 @@ async def test_goal_comprehensive_flow_integration(async_client, async_session):
         assert fetched_goal["user_id"] == user.id
 
     goal_to_update = created_goals[0]
-    update_data = {
-        "title": "Updated Goal 1",
-        "description": "Halfway there!"
-    }
+    update_data = {"title": "Updated Goal 1", "description": "Halfway there!"}
 
     response = await async_client.patch(
-        UPDATE_GOAL.format(goal_id=goal_to_update['id']),
+        UPDATE_GOAL.format(goal_id=goal_to_update["id"]),
         headers={"Authorization": f"Bearer {access_token}"},
-        json=update_data
+        json=update_data,
     )
 
     assert response.status_code == 200
