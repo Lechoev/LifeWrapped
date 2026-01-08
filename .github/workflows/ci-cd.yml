@@ -51,21 +51,21 @@ jobs:
         run: |
           pytest -v --cov=src --cov-report=term-missing
 
-deploy:
-  needs: [ test ]
-  runs-on: ubuntu-latest
-  if: github.ref == 'refs/heads/main'
+  deploy:
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
 
-  steps:
-    - name: SSH на сервер и обновление
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.VPS_IP }}
-        username: ${{ secrets.VPS_USER }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        script: |
-          cd /home/deploy/LifeWrapped
-          git pull origin main
-          docker compose down
-          docker compose up -d --build
-          echo "Новая версия запущена!"
+    steps:
+      - name: SSH на сервер и обновление
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/deploy/LifeWrapped
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            echo "Новая версия запущена!"
