@@ -4,7 +4,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional
 
-from src import conf
+from src.conf.settings import settings
 
 
 def setup_logging(
@@ -47,11 +47,11 @@ def setup_logging(
 
 
 app_logger = setup_logging(
-    log_level=conf.settings.LOG_LEVEL
-    if hasattr(conf.settings, "LOG_LEVEL")
+    log_level=settings.LOG_LEVEL
+    if hasattr(settings, "LOG_LEVEL")
     else "INFO",
-    log_file=conf.settings.LOG_FILE
-    if hasattr(conf.settings, "LOG_FILE")
+    log_file=settings.LOG_FILE
+    if hasattr(settings, "LOG_FILE")
     else "logs/app.log",
 )
 

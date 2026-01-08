@@ -3,10 +3,10 @@ from datetime import date, datetime
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src import conf
+from src.conf.base import Base
 
 
-class GoalModel(conf.Base):
+class GoalModel(Base):
     __tablename__ = "goals"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -61,7 +61,7 @@ class GoalModel(conf.Base):
     )
 
 
-class ProgressEventModel(conf.Base):
+class ProgressEventModel(Base):
     __tablename__ = "progress_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -103,7 +103,7 @@ class ProgressEventModel(conf.Base):
         )
 
 
-class ImageModel(conf.Base):
+class ImageModel(Base):
     __tablename__ = "images"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

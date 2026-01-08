@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src import conf
+from src.conf.base import Base
 
 if TYPE_CHECKING:
     from src.profiles.models import ProfileModel
 
 
-class AuthModel(conf.Base):
+class AuthModel(Base):
     __tablename__ = "auth"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(
@@ -40,7 +40,7 @@ class AuthModel(conf.Base):
         return f"Auth(id={self.id}, email={self.email}, verified={self.is_verified})"
 
 
-class VerificationCodeModel(conf.Base):
+class VerificationCodeModel(Base):
     __tablename__ = "verification_code"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -75,7 +75,7 @@ class VerificationCodeModel(conf.Base):
         return cls(email=email, code=code)
 
 
-class RefreshTokenModel(conf.Base):
+class RefreshTokenModel(Base):
     __tablename__ = "refresh_token"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

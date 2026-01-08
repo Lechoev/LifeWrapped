@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src import conf
+from src.conf.base import Base
 
 if TYPE_CHECKING:
     from src.auth_user.models import AuthModel
 
 
-class ProfileModel(conf.Base):
+class ProfileModel(Base):
     __tablename__ = "profile"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
