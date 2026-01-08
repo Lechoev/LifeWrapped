@@ -45,16 +45,42 @@ jobs:
 
       - name: Run tests with coverage
         env:
+      - name: Run tests with coverage
+        env:
+          DB_NAME: test_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+
           REDIS_URL: redis://localhost:6379/0
+
+          SECRET_KEY: ci_test_secret_key_only_for_github_actions_2026
+          ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: 60
+          REFRESH_TOKEN_EXPIRE_DAYS: 7
+
           DEBUG: "True"
+
+          EMAIL_HOST: smtp.test-server.com
+          EMAIL_PORT: 587
+          EMAIL_USE_TLS: "True"
+          EMAIL_USE_SSL: "False"
+          EMAIL_HOST_USER: test-user@example.com
+          EMAIL_HOST_PASSWORD: test-password-123
+          DEFAULT_FROM_EMAIL: noreply@example.com
+
+          LOG_LEVEL: DEBUG
+          LOG_FILE: test_app.log
+
         run: |
           pytest -v --cov=src --cov-report=term-missing
 
   deploy:
     needs: [ test ]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: SSH на сервер и обновление
@@ -65,7 +91,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/deploy/LifeWrapped
-            git pull origin main
+            git pull origin master
             docker compose down
             docker compose up -d --build
             echo "Новая версия запущена!"
