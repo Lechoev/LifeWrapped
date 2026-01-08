@@ -45,8 +45,6 @@ jobs:
 
       - name: Run tests with coverage
         env:
-      - name: Run tests with coverage
-        env:
           DB_NAME: test_db
           DB_USER: postgres
           DB_PASSWORD: postgres
