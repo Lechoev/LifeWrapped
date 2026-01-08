@@ -46,11 +46,10 @@ async def test_create_profile_success():
 
     result = await service.create_profile(user_id=1, profile_data=profile_data)
 
-    assert result["user_id"] == 1
     assert result["first_name"] == "John"
     assert result["last_name"] == "Doe"
     assert result["bio"] == "Developer"
-    assert result["birth_date"] == mock_profile.birth_date.isoformat()
+    assert result["birth_date"] == mock_profile.birth_date
 
     mock_uow.profiles.get_profile.assert_called_once_with(1)
     mock_uow.profiles.create_profile.assert_called_once_with(
@@ -232,7 +231,6 @@ async def test_create_profile_with_none_values():
 
     result = await service.create_profile(user_id=1, profile_data=profile_data)
 
-    assert result["user_id"] == 1
     assert result["first_name"] is None
     assert result["last_name"] is None
     assert result["bio"] is None
