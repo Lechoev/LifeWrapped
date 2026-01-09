@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from sqlalchemy import select, update
 
 from src.conf.logger import get_logger
@@ -6,7 +8,21 @@ from src.profiles.models import ProfileModel
 logger = get_logger(__name__)
 
 
-class ProfileRepository:
+class ProfileInterface(ABC):
+    @abstractmethod
+    async def check_profile(self, user_id: int): ...
+
+    @abstractmethod
+    async def create_profile(self, data: dict): ...
+
+    @abstractmethod
+    async def update_profile(self, user_id: int, update_data: dict): ...
+
+    @abstractmethod
+    async def get_profile(self, user_id: int): ...
+
+
+class ProfileRepository(ProfileInterface):
     def __init__(self, session):
         self.session = session
 

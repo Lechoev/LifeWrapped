@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 
 from sqlalchemy import delete, not_, select, update
@@ -9,7 +10,41 @@ from src.conf.logger import get_logger
 logger = get_logger(__name__)
 
 
-class AuthRepository:
+class AuthInterface(ABC):
+    @abstractmethod
+    async def get_user_by_email(self, email: str): ...
+
+    @abstractmethod
+    async def create_user(self, email: str): ...
+
+    @abstractmethod
+    async def delete_verification_codes(self, email: str): ...
+
+    @abstractmethod
+    async def create_verification_code(self, email: str): ...
+
+    @abstractmethod
+    async def find_verification_code(self, email: str, code: str): ...
+
+    @abstractmethod
+    async def save_refresh_token(
+        self, user_id: int, token_hash: str, expires_at: datetime
+    ): ...
+
+    @abstractmethod
+    async def find_valid_refresh_token(self, user_id: int, plain_token: str): ...
+
+    @abstractmethod
+    async def revoke_all_user_tokens(self, user_id: int): ...
+
+    @abstractmethod
+    async def cleanup_expired_tokens(self) -> int: ...
+
+    @abstractmethod
+    async def find_valid_refresh_token_by_token(self, plain_token: str): ...
+
+
+class AuthRepository(AuthInterface):
     def __init__(self, session: AsyncSession):
         self.session = session
 

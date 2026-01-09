@@ -2,9 +2,9 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from src.auth_user.repositories import AuthRepository
-from src.goals.repositories import GoalRepository
-from src.profiles.repositories import ProfileRepository
+from src.auth_user.repositories import AuthInterface, AuthRepository
+from src.goals.repositories import GoalInterface, GoalRepository
+from src.profiles.repositories import ProfileInterface, ProfileRepository
 
 
 class UnitOfWork:
@@ -37,8 +37,7 @@ class UnitOfWork:
             self._repositories_cache.clear()
 
     @property
-    def goals(self) -> GoalRepository:
-        """Ленивая загрузка репозитория целей"""
+    def goals(self) -> GoalInterface:
         if "goals" not in self._repositories_cache:
             if not self.session:
                 raise RuntimeError(
@@ -48,7 +47,7 @@ class UnitOfWork:
         return self._repositories_cache["goals"]
 
     @property
-    def profiles(self) -> ProfileRepository:
+    def profiles(self) -> ProfileInterface:
         if "profiles" not in self._repositories_cache:
             if not self.session:
                 raise RuntimeError(
@@ -58,7 +57,7 @@ class UnitOfWork:
         return self._repositories_cache["profiles"]
 
     @property
-    def auth(self) -> AuthRepository:
+    def auth(self) -> AuthInterface:
         if "auth" not in self._repositories_cache:
             if not self.session:
                 raise RuntimeError(

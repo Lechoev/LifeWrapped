@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from sqlalchemy import exists, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +9,23 @@ from src.goals.exceptions import IdNotFoundError
 from src.goals.models import GoalModel
 
 logger = get_logger(__name__)
+
+
+class GoalInterface(ABC):
+    @abstractmethod
+    async def create_goal(self, data: dict): ...
+
+    @abstractmethod
+    async def get_by_id(self, goal_id: int, user_id: int): ...
+
+    @abstractmethod
+    async def get_all_by_user(self, user_id: int): ...
+
+    @abstractmethod
+    async def check_parent_exists(self, parent_id: int, user_id: int): ...
+
+    @abstractmethod
+    async def update_goal(self, goal_id: int, user_id: int, update_data: dict): ...
 
 
 class GoalRepository:
@@ -36,7 +55,6 @@ class GoalRepository:
         return result.scalar_one_or_none()
 
     async def get_all_by_user(self, user_id: int):
-        """Все цели пользователя"""
         result = await self.session.execute(
             select(GoalModel)
             .where(GoalModel.user_id == user_id)
@@ -50,7 +68,6 @@ class GoalRepository:
         return goals
 
     async def check_parent_exists(self, parent_id: int, user_id: int) -> bool:
-        """Проверить существование родительской цели"""
         result = await self.session.execute(
             select(
                 exists().where(GoalModel.id == parent_id, GoalModel.user_id == user_id)
