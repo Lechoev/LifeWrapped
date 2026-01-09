@@ -16,5 +16,8 @@ exec gunicorn -k uvicorn.workers.UvicornWorker \
      --error-logfile - \
      src.main:app \
      --worker-tmp-dir /dev/shm \
-     --log-level warning \
-     --access-logfile /dev/null
+     --log-level info \
+     --access-logfile - \
+     --error-logfile - \
+     --capture-output \
+     --enable-stdio-inheritance

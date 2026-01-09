@@ -1,10 +1,10 @@
 import contextlib
 from typing import AsyncIterator
 
-import uvicorn
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src import conf
 from src.auth_user.exceptions import AuthError
@@ -78,13 +78,5 @@ app.include_router(auth_router, prefix="/auth_router")
 app.include_router(profiles_router, prefix="/profiles_router")
 app.include_router(goals_router, prefix="/goals_router")
 
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_config=None,  # Используем наше собственное логирование
-        access_log=False,  # Отключаем стандартный access log от uvicorn
-    )
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app, endpoint="/metrics")
