@@ -12,6 +12,6 @@
 
 **Стек:**  
 FastAPI (async) • Python 3.12 • PostgreSQL + async SQLAlchemy • Redis 
-Celery • Gunicorn • Uvicorn • Docker • docker-compose • GitHub Actions CI/CD 
+Celery • Gunicorn • Uvicorn • Docker • docker-compose • GitHub Actions CI/CD   
 Prometheus + Grafana + Loki • pytest • Ruff
 
