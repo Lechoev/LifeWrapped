@@ -38,5 +38,7 @@ class Settings(BaseSettings):
     LOG_FILE: str = os.getenv("LOG_FILE")
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+    RABBIT_BROKER_URL: str = os.getenv("RABBIT_BROKER_URL")
+
 
 settings = Settings()

@@ -4,16 +4,19 @@ from typing import AsyncIterator
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from src import conf
 from src.auth_user.exceptions import AuthError
 from src.auth_user.routers import router as auth_router
+from src.conf.broker import broker
 from src.conf.logger import get_logger
 from src.goals.routers import router as goals_router
 from src.profiles.routers import router as profiles_router
 
 logger = get_logger(__name__)
+
 
 
 @contextlib.asynccontextmanager
@@ -22,8 +25,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Initializing database connection...")
     conf.db_manager.init(conf.settings.database_url)
     logger.info("Database initialized")
+    logger.info("Initializing broker connection...")
+    await broker.start()
+    logger.info("Broker initialized")
     yield
     await conf.db_manager.close()
+    await broker.stop()
 
 
 app = FastAPI(title="FastAPI", lifespan=lifespan)

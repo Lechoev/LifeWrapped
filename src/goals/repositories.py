@@ -28,7 +28,7 @@ class GoalInterface(ABC):
     async def update_goal(self, goal_id: int, user_id: int, update_data: dict): ...
 
 
-class GoalRepository:
+class GoalRepository(GoalInterface):
     def __init__(self, session: AsyncSession):
         self.session = session
 

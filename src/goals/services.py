@@ -77,3 +77,22 @@ class GoalService:
             result = await uow.goals.update_goal(goal_id, user_id, goal_data)
             logger.info("Goal updated", extra={"user_id": user_id, "goal_id": goal_id})
             return result
+
+    async def prepare_wrapped_data(self, user_id: int, goal_id: int):
+        async with self.uow_factory() as uow:
+            goal = await uow.goals.get_by_id(goal_id, user_id)
+            if not goal:
+                raise GoalNotFound("Цель не найдена")
+            return {
+                "id": goal.id,
+                "title": goal.title,
+                "description": goal.description,
+                "category": goal.category,
+                "target_value": goal.target_value,
+                "unit": goal.unit,
+                "current_value": goal.current_value,
+                "end_date": goal.end_date.isoformat() if goal.end_date else None,
+                "is_completed": goal.is_completed,
+                "completed_at": goal.completed_at.isoformat() if goal.completed_at else None,
+                "parent_title": goal.parent.title if goal.parent else None,
+            }

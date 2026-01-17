@@ -1,6 +1,9 @@
+import uuid
+
 from fastapi import APIRouter, Depends
 
 from src.auth_user.dependencies import get_current_verified_user
+from src.conf.broker import broker
 from src.conf.logger import get_logger
 from src.goals.decorators import goal_exceptions
 from src.goals.dependencies import get_goal_service
@@ -15,9 +18,9 @@ router = APIRouter(tags=["goals"])
 @router.post("/v1/create-goals")
 @goal_exceptions
 async def create_goals(
-    goal_data: CreateGoalSchema,
-    service: GoalService = Depends(get_goal_service),
-    current_user: int = Depends(get_current_verified_user),
+        goal_data: CreateGoalSchema,
+        service: GoalService = Depends(get_goal_service),
+        current_user: int = Depends(get_current_verified_user),
 ):
     data = goal_data.model_dump()
     data["user_id"] = current_user
@@ -30,8 +33,8 @@ async def create_goals(
 @router.get("/v1/get-all-goals")
 @goal_exceptions
 async def get_all_goals(
-    service: GoalService = Depends(get_goal_service),
-    current_user: int = Depends(get_current_verified_user),
+        service: GoalService = Depends(get_goal_service),
+        current_user: int = Depends(get_current_verified_user),
 ):
     result = await service.get_all_goals(user_id=current_user)
 
@@ -44,9 +47,9 @@ async def get_all_goals(
 @router.get("/v1/get-goal/{goal_id}")
 @goal_exceptions
 async def get_goal(
-    goal_id: int,
-    service: GoalService = Depends(get_goal_service),
-    current_user: int = Depends(get_current_verified_user),
+        goal_id: int,
+        service: GoalService = Depends(get_goal_service),
+        current_user: int = Depends(get_current_verified_user),
 ):
     result = await service.get_goal(goal_id=goal_id, user_id=current_user)
 
@@ -57,10 +60,10 @@ async def get_goal(
 @router.patch("/v1/update-goal/{goal_id}")
 @goal_exceptions
 async def update_goal(
-    goal_id: int,
-    goal_data: UpdateGoalSchema,
-    service: GoalService = Depends(get_goal_service),
-    current_user: int = Depends(get_current_verified_user),
+        goal_id: int,
+        goal_data: UpdateGoalSchema,
+        service: GoalService = Depends(get_goal_service),
+        current_user: int = Depends(get_current_verified_user),
 ):
     update_dict = goal_data.model_dump(exclude_unset=True)  # только переданные поля
     result = await service.update_goal(
@@ -69,3 +72,23 @@ async def update_goal(
 
     logger.info("Goal updated", extra={"user_id": current_user, "goal_id": goal_id})
     return {"status": "success", "data": result}
+
+
+@router.post('/v1/create-goal-report')
+@goal_exceptions
+async def request_wrapped(
+        goal_id: int,
+        service: GoalService = Depends(get_goal_service),
+        current_user: int = Depends(get_current_verified_user),
+):
+    wrapped_data = await service.prepare_wrapped_data(current_user, goal_id)
+    correlation_id = f"{current_user}_{uuid.uuid4()}"
+    await broker.publish(
+        {
+            "correlation_id": correlation_id,
+            "user_id": current_user,
+            "goal_data": wrapped_data,
+        },
+        queue="generate_wrapped",
+        correlation_id=correlation_id
+    )
